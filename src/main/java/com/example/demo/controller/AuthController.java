@@ -20,6 +20,10 @@ public class AuthController {
     @Autowired
     private JwtUtil jwtUtil;
 
+    //TODO: Evite usar classe dentro de classe e por ser um DTO o melhor é melhor criar um package "dto"
+    // para as duas classes.
+    // Outro ponto é o uso de classe statica, porque qdo é estatica não existe instancia ou seja a classe
+    // é compartilhada com todas as Threads então haverá sobreposição de valores
     public static class AuthRequest {
         public String username;
         public String password;
