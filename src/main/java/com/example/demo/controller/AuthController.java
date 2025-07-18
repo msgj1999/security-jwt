@@ -1,6 +1,11 @@
 package com.example.demo.controller;
 
+import com.example.demo.dto.AuthRequest;
+import com.example.demo.dto.AuthResponse;
 import com.example.demo.util.JwtUtil;
+
+import lombok.extern.log4j.Log4j2;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -11,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Log4j2
 @RestController
 public class AuthController {
 
@@ -20,33 +26,23 @@ public class AuthController {
     @Autowired
     private JwtUtil jwtUtil;
 
-    //TODO: Evite usar classe dentro de classe e por ser um DTO o melhor é melhor criar um package "dto"
-    // para as duas classes.
-    // Outro ponto é o uso de classe statica, porque qdo é estatica não existe instancia ou seja a classe
-    // é compartilhada com todas as Threads então haverá sobreposição de valores
-    public static class AuthRequest {
-        public String username;
-        public String password;
-    }
-
-    public static class AuthResponse {
-        public String token;
-
-        public AuthResponse(String token) {
-            this.token = token;
-        }
-    }
-
     @PostMapping("/auth")
     public AuthResponse authenticate(@RequestBody AuthRequest request) {
+        log.info("Iniciando autenticação para o usuário: {}", request.getUsername());
+
         Authentication auth = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.username, request.password));
+                new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+        );
 
         List<String> roles = auth.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList());
 
-        String token = jwtUtil.generateToken(request.username, roles);
+        log.info("Usuário autenticado com sucesso: {} | Roles: {}", request.getUsername(), roles);
+
+        String token = jwtUtil.generateToken(request.getUsername(), roles);
+
+        log.debug("Token JWT gerado para o usuário {}: {}", request.getUsername(), token);
 
         return new AuthResponse(token);
     }
