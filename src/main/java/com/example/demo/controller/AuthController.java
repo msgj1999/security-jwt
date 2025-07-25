@@ -40,7 +40,7 @@ public class AuthController {
 
         log.info("Usuário autenticado com sucesso: {} | Roles: {}", request.getUsername(), roles);
 
-        String token = jwtUtil.generateToken(request.getUsername(), roles);
+        String token = jwtUtil.generateToken(request.getUsername());
 
         log.debug("Token JWT gerado para o usuário {}: {}", request.getUsername(), token);
 

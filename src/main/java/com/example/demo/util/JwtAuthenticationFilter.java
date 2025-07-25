@@ -48,20 +48,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String username = jwtUtil.getUsernameFromToken(token);
-        List<String> roles = jwtUtil.getRolesFromToken(token);
 
-        var authorities = roles.stream()
-                .map(SimpleGrantedAuthority::new)
-                .collect(Collectors.toList());
-
-        var authenticationToken =
-                new UsernamePasswordAuthenticationToken(username, null, authorities);
+        var authenticationToken = new UsernamePasswordAuthenticationToken(
+            username,
+            null,
+            List.of() 
+        );
 
         authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(authenticationToken);
 
-        log.info("Usuário autenticado via token JWT: {} | Roles: {}", username, roles);
+        log.info("Usuário autenticado via token JWT: {}", username);
 
         filterChain.doFilter(request, response);
     }
+
 }

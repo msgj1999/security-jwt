@@ -3,6 +3,7 @@ package com.example.demo.security;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -19,6 +20,7 @@ import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import com.example.demo.service.UsuarioDetailsService;
 import com.example.demo.util.JwtAuthenticationFilter;
 
 import lombok.extern.log4j.Log4j2;
@@ -37,11 +39,11 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-            	.requestMatchers("/actuator/health").permitAll()
+                .requestMatchers("/actuator/health").permitAll()
                 .requestMatchers("/auth", "/").permitAll()
-                .requestMatchers("/endpoint1").hasRole("ONE")
-                .requestMatchers("/endpoint2").hasRole("TWO")
-                .requestMatchers("/endpoint3").hasRole("THREE")
+                .requestMatchers(HttpMethod.POST, "/cadastrar").permitAll() 
+                .requestMatchers(HttpMethod.GET, "/listar").authenticated()  
+                .requestMatchers(HttpMethod.PUT, "/{id}/status").authenticated() 
                 .anyRequest().authenticated()
             )
             .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -53,18 +55,21 @@ public class SecurityConfig {
 
     @Bean
     public UserDetailsService userDetailsService() {
-        log.info("Criando usuários na memória");
-        return new InMemoryUserDetailsManager(
-            User.withUsername("user1").password(passwordEncoder().encode("123")).roles("ONE").build(),
-            User.withUsername("user2").password(passwordEncoder().encode("123")).roles("ONE", "TWO").build(),
-            User.withUsername("admin").password(passwordEncoder().encode("123")).roles("ONE", "TWO", "THREE").build()
-        );
+        return new UsuarioDetailsService();
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
+    public AuthenticationManager authenticationManager(
+            UsuarioDetailsService userDetailsService,
+            PasswordEncoder passwordEncoder) {
+
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder);
+
+        return new ProviderManager(authProvider);
     }
+
 
     @Bean
     public PasswordEncoder passwordEncoder() {
